@@ -1,30 +1,24 @@
 import torch
-from torch.autograd import Variable
 from torch.nn import CrossEntropyLoss
-from torch.nn.functional import relu
 from torch.optim import SGD
 from torch.utils.data import DataLoader
 
 
 class Net(torch.nn.Module):
-    def __init__(
-        self,
-        in_features: int,
-        hidden_1_features: int,
-        hidden_2_features: int,
-        out_features: int,
-    ) -> None:
+    def __init__(self, features: list[int]) -> None:
+        assert len(features) >= 2
         super(Net, self).__init__()
-        self.fc1 = torch.nn.Linear(in_features, hidden_1_features)
-        self.fc2 = torch.nn.Linear(hidden_1_features, hidden_2_features)
-        self.fc3 = torch.nn.Linear(hidden_2_features, out_features)
+        self.layers = torch.nn.Sequential()
+        for i in range(len(features) - 1):
+            self.layers.add_module(
+                f"fc{i + 1}", torch.nn.Linear(features[i], features[i + 1])
+            )
+            if i + 1 < len(features) - 1:
+                self.layers.add_module(f"af{i + 1}", torch.nn.Sigmoid())
 
-    def forward(self, x):
-        x = relu(self.fc1(x))
-        x = relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.layers(x)
 
-    def calc_acc(self, y: torch.Tensor, t: torch.Tensor):
+    def calc_acc(self, y: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
         y_label = torch.argmax(y, dim=1)
         return torch.sum(y_label == t) / len(t)
