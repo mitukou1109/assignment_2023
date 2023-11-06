@@ -11,13 +11,13 @@ from .tensor import Tensor
 
 
 class Net:
-    def __init__(self, features: list[int]) -> None:
+    def __init__(self, features: list[int], alpha: float) -> None:
         assert len(features) >= 2
         self.layers: dict[str, Callable] = {}
         for i in range(len(features) - 1):
             self.layers[f"fc{i + 1}"] = Linear(features[i], features[i + 1])
             if i + 1 < len(features) - 1:
-                self.layers[f"af{i + 1}"] = Sigmoid()
+                self.layers[f"af{i + 1}"] = Sigmoid(alpha)
 
         w: Tensor = None
         for layer in self.layers.values():
