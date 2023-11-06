@@ -7,35 +7,28 @@ from .tensor import Tensor
 
 
 class CrossEntropyLoss:
-    def __init__(self, params: Tensor) -> None:
-        self.loss = None
+    def __init__(self, params: Tensor, alpha: float) -> None:
         self.params = params
+        self.alpha = alpha
 
-    def __call__(self, y: Tensor, t: np.ndarray) -> Self:
-        self.y = y
+    def __call__(self, y: Tensor, t: np.ndarray) -> np.ndarray:
         self.y_prob = softmax(y)
         self.t_prob = np.zeros(self.y_prob.shape)
         self.t_prob[np.arange(t.shape[0]), t] = 1
-        self.loss = cross_entropy(self.y_prob, self.t_prob)
-        return self
-
-    def item(self) -> np.ndarray:
-        return self.loss
+        return cross_entropy(self.y_prob, self.t_prob)
 
     def backward(self) -> Tensor:
         # assuming activation function is softmax for output layer, sigmoid for others
         delta = self.y_prob - self.t_prob
-        x: Tensor = self.y.prev
-        grad = Tensor(delta.T @ np.hstack([x, np.ones((x.shape[0], 1))]) / x.shape[0])
+        x: Tensor = self.y_prob.prev
+        grad = Tensor(delta.T @ np.hstack([x, np.ones((x.shape[0], 1))]))
         w = self.params
         g = grad
 
         while x.prev is not None:
-            delta = delta @ w[:, :-1] @ x.T @ (1 - x)
+            delta = (delta @ w[:, :-1]) * (self.alpha * x * (1 - x))
             x = x.prev
-            g.prev = Tensor(
-                delta.T @ np.hstack([x, np.ones((x.shape[0], 1))]) / x.shape[0]
-            )
+            g.prev = Tensor(delta.T @ np.hstack([x, np.ones((x.shape[0], 1))]))
             w = w.prev
             g = g.prev
 
