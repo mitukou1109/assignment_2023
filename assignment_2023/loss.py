@@ -21,14 +21,16 @@ class CrossEntropyLoss:
         # assuming activation function is softmax for output layer, sigmoid for others
         delta = self.y_prob - self.t_prob
         x: Tensor = self.y_prob.prev
-        grad = Tensor(delta.T @ np.hstack([x, np.ones((x.shape[0], 1))]))
+        grad = Tensor(delta.T @ np.hstack([x, np.ones((x.shape[0], 1))]) / x.shape[0])
         w = self.params
         g = grad
 
         while x.prev is not None:
             delta = (delta @ w[:, :-1]) * (self.alpha * x * (1 - x))
             x = x.prev
-            g.prev = Tensor(delta.T @ np.hstack([x, np.ones((x.shape[0], 1))]))
+            g.prev = Tensor(
+                delta.T @ np.hstack([x, np.ones((x.shape[0], 1))]) / x.shape[0]
+            )
             w = w.prev
             g = g.prev
 

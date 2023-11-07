@@ -8,7 +8,7 @@ from . import net as nn
 batch_size = 512
 features = [28 * 28, 1024, 512, 10]
 alpha = 1.0
-learning_rate = 0.001
+learning_rate = 0.5
 epochs = 10
 
 seed = 13
