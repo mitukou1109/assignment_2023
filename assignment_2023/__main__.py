@@ -36,13 +36,13 @@ criterion = nn.CrossEntropyLoss(net.parameters(), alpha)
 
 avg_acc_list = []
 avg_loss_list = []
+print("train")
 for i in range(epochs):
     print(f"epoch {i + 1}")
     acc_list = []
     loss_list = []
 
     for x, t in train_loader:
-        optimizer.zero_grad()
         x = x.reshape(-1, features[0])
         y = net(x)
         acc = net.calc_acc(y, t)
@@ -54,14 +54,23 @@ for i in range(epochs):
 
     avg_acc = np.mean(acc_list)
     avg_loss = np.mean(loss_list)
-    print(f"average accuracy: {avg_acc}, average loss: {avg_loss}\n")
     avg_acc_list.append(avg_acc)
     avg_loss_list.append(avg_loss)
 
-plt.figure()
-plt.plot(avg_acc_list, label="accuracy")
-plt.plot(avg_loss_list, label="loss")
-plt.legend()
+    print(f"average accuracy: {avg_acc}, average loss: {avg_loss}\n")
+
+fig = plt.figure()
+acc_ax = fig.add_subplot(111)
+acc_ax.plot(avg_acc_list, label="accuracy", color="C0")
+loss_ax = acc_ax.twinx()
+loss_ax.plot(avg_loss_list, label="loss", color="C1")
+h_acc, l_acc = acc_ax.get_legend_handles_labels()
+h_loss, l_loss = loss_ax.get_legend_handles_labels()
+acc_ax.legend(h_acc + h_loss, l_acc + l_loss, loc="lower left")
+acc_ax.set_xlabel("epoch")
+acc_ax.set_ylabel("accuracy")
+loss_ax.set_ylabel("loss")
+acc_ax.set_ylim(0, 1)
 plt.show()
 
 acc_list = []
