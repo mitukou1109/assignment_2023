@@ -1,38 +1,24 @@
-from typing import Callable
-
-import numpy as np
-
-from .activation import Sigmoid
-from .data_loader import DataLoader
-from .linear import Linear
-from .loss import CrossEntropyLoss
-from .optim import SGD
-from .tensor import Tensor
+import torch
+from torch.nn import CrossEntropyLoss
+from torch.optim import SGD
+from torch.utils.data import DataLoader
 
 
-class Net:
-    def __init__(self, features: list[int], alpha: float) -> None:
+class Net(torch.nn.Module):
+    def __init__(self, features: list[int]) -> None:
         assert len(features) >= 2
-        self.layers: dict[str, Callable] = {}
+        super(Net, self).__init__()
+        self.layers = torch.nn.Sequential()
         for i in range(len(features) - 1):
-            self.layers[f"fc{i + 1}"] = Linear(features[i], features[i + 1])
+            self.layers.add_module(
+                f"fc{i + 1}", torch.nn.Linear(features[i], features[i + 1])
+            )
             if i + 1 < len(features) - 1:
-                self.layers[f"af{i + 1}"] = Sigmoid(alpha)
+                self.layers.add_module(f"af{i + 1}", torch.nn.Sigmoid())
 
-        w: Tensor = None
-        for layer in self.layers.values():
-            if hasattr(layer, "w"):
-                w = Tensor(layer.w, w)
-        self.w = w
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.layers(x)
 
-    def __call__(self, x: Tensor) -> Tensor:
-        for layer in self.layers.values():
-            x = layer(x)
-        return x
-
-    def parameters(self) -> Tensor:
-        return self.w
-
-    def calc_acc(self, y: np.ndarray, t: np.ndarray) -> np.ndarray:
-        y_label = np.argmax(y, axis=1)
-        return np.sum(y_label == t) / len(t)
+    def calc_acc(self, y: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
+        y_label = torch.argmax(y, dim=1)
+        return torch.sum(y_label == t) / len(t)
