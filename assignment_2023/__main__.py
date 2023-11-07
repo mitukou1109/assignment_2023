@@ -1,17 +1,19 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 import torchvision
 
 from . import net as nn
 
-# from . import pytorch_net as nn
-
 batch_size = 512
 features = [28 * 28, 1024, 512, 10]
-# features = [28 * 28, 16, 10]
-alpha = 0.1
-learning_rate = 0.01
+alpha = 1.0
+learning_rate = 0.001
 epochs = 10
+
+seed = 13
+np.random.seed(seed)
+torch.manual_seed(seed)
 
 train_dataset = torchvision.datasets.MNIST(
     root="./data",
@@ -30,7 +32,6 @@ test_loader = nn.DataLoader(test_dataset, batch_size, num_workers=2)
 
 net = nn.Net(features, alpha)
 optimizer = nn.SGD(net.parameters(), learning_rate)
-# criterion = nn.CrossEntropyLoss()
 criterion = nn.CrossEntropyLoss(net.parameters(), alpha)
 
 avg_acc_list = []
@@ -46,19 +47,11 @@ for i in range(epochs):
         y = net(x)
         acc = net.calc_acc(y, t)
         loss = criterion(y, t)
-        # acc_list.append(acc.item())
         acc_list.append(acc)
-        loss_list.append(loss.item())
-        # loss.backward()
-        grad = loss.backward()
-        # optimizer.step()
+        loss_list.append(loss)
+        grad = criterion.backward()
         optimizer.step(grad)
 
-    # plt.figure()
-    # plt.plot(acc_list, label="accuracy")
-    # plt.plot(loss_list, label="loss")
-    # plt.legend()
-    # plt.show()
     avg_acc = np.mean(acc_list)
     avg_loss = np.mean(loss_list)
     print(f"average accuracy: {avg_acc}, average loss: {avg_loss}\n")
