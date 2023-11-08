@@ -33,6 +33,6 @@ class Net:
     def parameters(self) -> Tensor:
         return self.w
 
-    def calc_acc(self, y: np.ndarray, t: np.ndarray) -> np.ndarray:
+    def calc_acc(self, y: np.ndarray, t: np.ndarray) -> float:
         y_label = np.argmax(y, axis=1)
         return np.sum(y_label == t) / len(t)

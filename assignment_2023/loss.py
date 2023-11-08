@@ -11,7 +11,7 @@ class CrossEntropyLoss:
         self.params = params
         self.alpha = alpha
 
-    def __call__(self, y: Tensor, t: np.ndarray) -> np.ndarray:
+    def __call__(self, y: Tensor, t: np.ndarray) -> float:
         self.y_prob = softmax(y)
         self.t_prob = np.zeros(self.y_prob.shape)
         self.t_prob[np.arange(t.shape[0]), t] = 1
