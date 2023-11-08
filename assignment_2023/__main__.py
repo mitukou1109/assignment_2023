@@ -1,9 +1,12 @@
+from functools import partial
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision
 
 from . import net as nn
+from . import transforms
 
 batch_size = 512
 features = [28 * 28, 1024, 512, 10]
@@ -11,20 +14,31 @@ alpha = 1.0
 learning_rate = 0.5
 epochs = 10
 
+noise_prob = 0.25
+
 seed = 13
 np.random.seed(seed)
 torch.manual_seed(seed)
 
+dataset_transform = torchvision.transforms.Compose(
+    [
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Lambda(
+            partial(transforms.random_noise, prob=noise_prob)
+        ),
+    ]
+)
+
 train_dataset = torchvision.datasets.MNIST(
     root="./data",
     train=True,
-    transform=torchvision.transforms.ToTensor(),
+    transform=dataset_transform,
     download=True,
 )
 test_dataset = torchvision.datasets.MNIST(
     root="./data",
     train=False,
-    transform=torchvision.transforms.ToTensor(),
+    transform=dataset_transform,
     download=True,
 )
 train_loader = nn.DataLoader(train_dataset, batch_size, shuffle=True, num_workers=2)
