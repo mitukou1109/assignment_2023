@@ -14,6 +14,7 @@ alpha = 1.0
 learning_rate = 0.5
 epochs = 10
 
+show_data_sample = True
 noise_prob = 0.25
 
 seed = 13
@@ -43,6 +44,10 @@ test_dataset = torchvision.datasets.MNIST(
 )
 train_loader = nn.DataLoader(train_dataset, batch_size, shuffle=True, num_workers=2)
 test_loader = nn.DataLoader(test_dataset, batch_size, num_workers=2)
+if show_data_sample:
+    sample: np.ndarray = next(iter(train_loader))[0][0].transpose(1, 2, 0)
+    plt.imshow(sample)
+    plt.show()
 
 net = nn.Net(features, alpha)
 optimizer = nn.SGD(net.parameters(), learning_rate)
