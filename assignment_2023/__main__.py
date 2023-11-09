@@ -9,15 +9,22 @@ import torchvision
 from . import net as nn
 from . import transforms
 
+checkpoint_file = None
+
 batch_size = 512
 features = [28 * 28, 1024, 512, 10]
 learning_rate = 0.5
 epochs = 100
+noise_prob = 0
+seed = 13
 
 show_data_sample = False
-noise_prob = 0
 
-seed = 13
+if checkpoint_file is not None:
+    checkpoint: dict[str, np.ndarray] = np.load(checkpoint_file)
+    print(checkpoint["params"].shape)
+    exit()
+
 np.random.seed(seed)
 torch.manual_seed(seed)
 
@@ -52,6 +59,8 @@ net = nn.Net(features)
 optimizer = nn.SGD(net.parameters(), learning_rate)
 criterion = nn.CrossEntropyLoss(net.parameters())
 
+checkpoint_file = f"checkpoint/{datetime.now().strftime('%Y%m%d_%H%M%S')}.npz"
+
 result = np.ndarray((epochs, 4))
 epochs = np.arange(epochs)
 result[:, 0] = epochs + 1
@@ -85,6 +94,16 @@ for i in epochs:
 
     print(
         f"train loss: {train_loss[i]}, train accuracy: {train_acc[i]}, test accuracy: {test_acc[i]}\n"
+    )
+
+    np.savez_compressed(
+        checkpoint_file,
+        batch_size=np.array([batch_size]),
+        features=np.array(features),
+        learning_rate=np.array([learning_rate]),
+        noise_prob=np.array([noise_prob]),
+        seed=np.array([seed]),
+        result=result,
     )
 
 header = f"Batch size: {batch_size}, Hidden layers: {features[1:-1]}, Learning rate: {learning_rate}, Noise: {int(noise_prob * 100)}%"

@@ -13,3 +13,6 @@ class Tensor(np.ndarray):
         if obj is None:
             return
         self.prev = getattr(obj, "prev", None)
+
+    def expand(self) -> np.ndarray:
+        
