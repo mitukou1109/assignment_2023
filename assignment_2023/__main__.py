@@ -11,7 +11,6 @@ from . import transforms
 
 batch_size = 512
 features = [28 * 28, 1024, 512, 10]
-alpha = 1.0
 learning_rate = 0.5
 epochs = 100
 
@@ -49,9 +48,9 @@ if show_data_sample:
     plt.imshow(sample)
     plt.show()
 
-net = nn.Net(features, alpha)
+net = nn.Net(features)
 optimizer = nn.SGD(net.parameters(), learning_rate)
-criterion = nn.CrossEntropyLoss(net.parameters(), alpha)
+criterion = nn.CrossEntropyLoss(net.parameters())
 
 result = np.ndarray((epochs, 4))
 epochs = np.arange(epochs)

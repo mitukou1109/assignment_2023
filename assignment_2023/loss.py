@@ -7,9 +7,8 @@ from .tensor import Tensor
 
 
 class CrossEntropyLoss:
-    def __init__(self, params: Tensor, alpha: float) -> None:
+    def __init__(self, params: Tensor) -> None:
         self.params = params
-        self.alpha = alpha
 
     def __call__(self, y: Tensor, t: np.ndarray) -> float:
         self.y_prob = softmax(y)
@@ -26,7 +25,7 @@ class CrossEntropyLoss:
         g = grad
 
         while x.prev is not None:
-            delta = (delta @ w[:, :-1]) * (self.alpha * x * (1 - x))
+            delta = (delta @ w[:, :-1]) * (x * (1 - x))
             x = x.prev
             g.prev = Tensor(
                 delta.T @ np.hstack([x, np.ones((x.shape[0], 1))]) / x.shape[0]
