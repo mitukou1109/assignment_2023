@@ -1,5 +1,6 @@
 from functools import partial
 
+from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -14,11 +15,8 @@ alpha = 1.0
 learning_rate = 0.5
 epochs = 10
 
-show_data_sample = True
-noise_prob = 0.25
-
-show_loss = True
-show_learning_curve = True
+show_data_sample = False
+noise_prob = 0
 
 seed = 13
 np.random.seed(seed)
@@ -55,11 +53,14 @@ net = nn.Net(features, alpha)
 optimizer = nn.SGD(net.parameters(), learning_rate)
 criterion = nn.CrossEntropyLoss(net.parameters(), alpha)
 
-train_acc = []
-train_loss = []
-test_acc = []
+result = np.ndarray((epochs, 4))
+epochs = np.arange(epochs)
+result[:, 0] = epochs + 1
+train_loss = result[:, 1]
+train_acc = result[:, 2]
+test_acc = result[:, 3]
 
-for i in range(epochs):
+for i in epochs:
     print(f"epoch {i + 1}")
 
     acc = 0
@@ -72,8 +73,8 @@ for i in range(epochs):
         grad = criterion.backward()
         optimizer.step(grad)
 
-    train_acc.append(acc / len(train_loader))
-    train_loss.append(loss / len(train_loader))
+    train_acc[i] = acc / len(train_loader)
+    train_loss[i] = loss / len(train_loader)
 
     acc = 0
     for x, t in test_loader:
@@ -81,38 +82,19 @@ for i in range(epochs):
         y = net(x)
         acc += net.calc_acc(y, t)
 
-    test_acc.append(acc / len(test_loader))
+    test_acc[i] = acc / len(test_loader)
 
     print(
-        f"train accuracy: {train_acc[-1]}, train loss: {train_loss[-1]}, test accuracy: {test_acc[-1]}\n"
+        f"train loss: {train_loss[i]}, train accuracy: {train_acc[i]}, test accuracy: {test_acc[i]}\n"
     )
 
-x_ticks = np.arange(1, epochs + 1)
-title = f"Batch size: {batch_size}, Hidden layers: {features[1:-1]}, \nLearning rate: {learning_rate}, Noise: {int(noise_prob * 100)}%"
-
-if show_loss:
-    loss_curve = plt.figure(num="Loss")
-    ax = loss_curve.add_subplot()
-    ax.set_title(title)
-    ax.plot(x_ticks, train_loss)
-    ax.set_xlabel("epoch")
-    ax.set_ylabel("loss")
-    ax.set_xticks(x_ticks)
-    ax.grid(axis="y")
-
-if show_learning_curve:
-    learning_curve = plt.figure(num="Learning curve")
-    ax = learning_curve.add_subplot()
-    ax.set_title(title)
-    ax.plot(x_ticks, train_acc, label="train")
-    ax.plot(x_ticks, test_acc, label="test")
-    ax.legend(loc="lower right")
-    ax.set_xlabel("epoch")
-    ax.set_ylabel("accuracy")
-    ax.set_xticks(x_ticks)
-    y_min = np.round(min(train_acc + test_acc), 1)
-    ax.set_yticks(np.arange(y_min, 1.01, 0.05 if 1 - y_min < 0.4 else 0.1))
-    ax.set_ylim(y_min - (1 - y_min) * 0.05, 1 + (1 - y_min) * 0.05)
-    ax.grid(axis="y")
-
-plt.show()
+header = f"Batch size: {batch_size}, Hidden layers: {features[1:-1]}, Learning rate: {learning_rate}, Noise: {int(noise_prob * 100)}%"
+header += "\nEpoch, Train loss, Train accuracy, Test accuracy"
+now = datetime.now()
+np.savetxt(
+    f"log/{now.strftime('%Y%m%d_%H%M%S')}.csv",
+    result,
+    fmt=["%d", "%f", "%f", "%f"],
+    delimiter=",",
+    header=header,
+)

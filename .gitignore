@@ -1,5 +1,7 @@
 data/
 
+log/
+
 .venv/
 
 .vscode/
