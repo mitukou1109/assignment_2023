@@ -88,10 +88,12 @@ for i in range(epochs):
     )
 
 x_ticks = np.arange(1, epochs + 1)
+title = f"Batch size: {batch_size}, Hidden layers: {features[1:-1]}, \nLearning rate: {learning_rate}, Noise: {int(noise_prob * 100)}%"
 
 if show_loss:
-    loss_curve = plt.figure()
+    loss_curve = plt.figure(num="Loss")
     ax = loss_curve.add_subplot()
+    ax.set_title(title)
     ax.plot(x_ticks, train_loss)
     ax.set_xlabel("epoch")
     ax.set_ylabel("loss")
@@ -99,8 +101,9 @@ if show_loss:
     ax.grid(axis="y")
 
 if show_learning_curve:
-    learning_curve = plt.figure()
+    learning_curve = plt.figure(num="Learning curve")
     ax = learning_curve.add_subplot()
+    ax.set_title(title)
     ax.plot(x_ticks, train_acc, label="train")
     ax.plot(x_ticks, test_acc, label="test")
     ax.legend(loc="lower right")
