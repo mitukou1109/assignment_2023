@@ -13,7 +13,7 @@ batch_size = 512
 features = [28 * 28, 1024, 512, 10]
 alpha = 1.0
 learning_rate = 0.5
-epochs = 10
+epochs = 100
 
 show_data_sample = False
 noise_prob = 0
