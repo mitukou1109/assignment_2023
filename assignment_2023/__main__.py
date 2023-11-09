@@ -87,30 +87,29 @@ for i in range(epochs):
         f"train accuracy: {train_acc[-1]}, train loss: {train_loss[-1]}, test accuracy: {test_acc[-1]}\n"
     )
 
-ncols = show_loss + show_learning_curve
-fig = plt.figure(figsize=(6 * ncols, 6))
 x_ticks = np.arange(1, epochs + 1)
 
 if show_loss:
-    loss_curve = fig.add_subplot(1, ncols, 1)
-    loss_curve.plot(x_ticks, train_loss)
-    loss_curve.set_xlabel("epoch")
-    loss_curve.set_ylabel("loss")
-    loss_curve.set_xticks(x_ticks)
-    loss_curve.grid(axis="y")
+    loss_curve = plt.figure()
+    ax = loss_curve.add_subplot()
+    ax.plot(x_ticks, train_loss)
+    ax.set_xlabel("epoch")
+    ax.set_ylabel("loss")
+    ax.set_xticks(x_ticks)
+    ax.grid(axis="y")
 
 if show_learning_curve:
-    learning_curve = fig.add_subplot(1, ncols, ncols)
-    learning_curve.plot(x_ticks, train_acc, label="train")
-    learning_curve.plot(x_ticks, test_acc, label="test")
-    learning_curve.legend(loc="lower right")
-    learning_curve.set_xlabel("epoch")
-    learning_curve.set_ylabel("accuracy")
-    learning_curve.set_xticks(x_ticks)
+    learning_curve = plt.figure()
+    ax = learning_curve.add_subplot()
+    ax.plot(x_ticks, train_acc, label="train")
+    ax.plot(x_ticks, test_acc, label="test")
+    ax.legend(loc="lower right")
+    ax.set_xlabel("epoch")
+    ax.set_ylabel("accuracy")
+    ax.set_xticks(x_ticks)
     y_min = np.round(min(train_acc + test_acc), 1)
-    learning_curve.set_yticks(np.arange(y_min, 1.0, 0.05))
-    learning_curve.set_ylim(y_min - (1 - y_min) * 0.05, 1 + (1 - y_min) * 0.05)
-    learning_curve.grid(axis="y")
+    ax.set_yticks(np.arange(y_min, 1.01, 0.05 if 1 - y_min < 0.4 else 0.1))
+    ax.set_ylim(y_min - (1 - y_min) * 0.05, 1 + (1 - y_min) * 0.05)
+    ax.grid(axis="y")
 
-plt.tight_layout()
 plt.show()
