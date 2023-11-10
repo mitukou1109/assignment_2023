@@ -26,9 +26,10 @@ class Net:
         self.w = w
 
     def __call__(self, x: Tensor) -> Tensor:
+        y = x.copy()
         for layer in self.layers.values():
-            x = layer(x)
-        return x
+            y = layer(y)
+        return y
 
     def parameters(self) -> Tensor:
         return self.w

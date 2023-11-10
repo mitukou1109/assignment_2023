@@ -19,6 +19,7 @@ noise_prob = 0
 seed = 13
 
 show_data_sample = False
+show_optimal_stimuli = True
 
 initial_params: nn.Tensor = None
 result = np.ndarray((epochs, 4))
@@ -112,10 +113,13 @@ for i in np.arange(starting_epoch, epochs):
     train_loss[i] = loss / len(train_loader)
 
     acc = 0
+    optimal_stimuli: 
     for x, t in test_loader:
         x = x.reshape(-1, features[0])
         y = net(x)
         acc += net.calc_acc(y, t)
+        while y is not None:
+            optimal_stimuli.append((y.max(axis=0), x[y.argmax(axis=0)]))
 
     test_acc[i] = acc / len(test_loader)
 
