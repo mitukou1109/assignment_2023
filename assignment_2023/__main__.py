@@ -1,15 +1,15 @@
+import sys
+from datetime import datetime
 from functools import partial
 
-from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision
+from PIL import Image
 
 from . import net as nn
 from . import transforms
-
-import sys
 
 batch_size = 512
 features = [28 * 28, 1024, 512, 10]
@@ -76,7 +76,7 @@ train_loader = nn.DataLoader(train_dataset, batch_size, shuffle=True, num_worker
 test_loader = nn.DataLoader(test_dataset, batch_size, num_workers=2)
 if show_data_sample:
     sample: np.ndarray = next(iter(train_loader))[0][0].transpose(1, 2, 0)
-    plt.imshow(sample)
+    plt.imshow(sample, cmap="gray")
     plt.show()
 
 net = nn.Net(features)
@@ -113,13 +113,21 @@ for i in np.arange(starting_epoch, epochs):
     train_loss[i] = loss / len(train_loader)
 
     acc = 0
-    optimal_stimuli: 
+    hidden_layer_output = np.zeros((features[1],))
+    optimal_stimuli = np.ndarray((features[1], 28, 28))
     for x, t in test_loader:
-        x = x.reshape(-1, features[0])
-        y = net(x)
+        x_flat = x.reshape(-1, features[0])
+        y = net(x_flat)
         acc += net.calc_acc(y, t)
-        while y is not None:
-            optimal_stimuli.append((y.max(axis=0), x[y.argmax(axis=0)]))
+
+        if show_optimal_stimuli:
+            y: nn.Tensor = net.layers["fc1"](x_flat)
+            optimal_stimuli = np.where(
+                hidden_layer_output < y.max(axis=0),
+                x[y.argmax(axis=0)].squeeze().T,
+                optimal_stimuli.T,
+            ).T
+            hidden_layer_output = np.fmax(hidden_layer_output, y.max(axis=0))
 
     test_acc[i] = acc / len(test_loader)
 
@@ -146,3 +154,14 @@ for i in np.arange(starting_epoch, epochs):
         delimiter=",",
         header=header,
     )
+
+if show_optimal_stimuli:
+    optimal_stimuli = (
+        optimal_stimuli.reshape(32, 32, 28, 28).swapaxes(1, 2).reshape(32 * 28, 32 * 28)
+    )
+    Image.fromarray(((1 - optimal_stimuli) * 255).astype("uint8"), mode="L").save(
+        "log/optimal_stimuli.png"
+    )
+    plt.imshow(optimal_stimuli, cmap="gray_r")
+    plt.axis("off")
+    plt.show()
