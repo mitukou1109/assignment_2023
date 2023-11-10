@@ -14,5 +14,12 @@ class Tensor(np.ndarray):
             return
         self.prev = getattr(obj, "prev", None)
 
-    def expand(self) -> np.ndarray:
-        
+    def expand(self, prefix: str) -> dict[str, np.ndarray]:
+        expanded_data: dict[str, np.ndarray] = {}
+        data = self
+        count = 0
+        while data is not None:
+            expanded_data[f"{prefix}_{count}"] = data
+            data = data.prev
+            count += 1
+        return expanded_data

@@ -1,6 +1,8 @@
+checkpoint/
+
 data/
 
-checkpoint/
+log/
 
 .venv/
 

@@ -38,4 +38,8 @@ class Net:
         return np.sum(y_label == t) / len(t)
 
     def set_params(self, params: Tensor) -> None:
-        self.w = params
+        w = self.w
+        while params is not None:
+            w[:] = params[:]
+            w = w.prev
+            params = params.prev
