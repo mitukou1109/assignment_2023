@@ -29,9 +29,12 @@ result = np.ndarray((epochs, 4))
 result[:, 0] = np.arange(epochs) + 1
 starting_epoch = 0 if train else epochs - 1
 
+file_basename = datetime.now().strftime("%Y%m%d_%H%M%S")
+checkpoint_file = f"checkpoint/{file_basename}.npz"
+
 if len(sys.argv) >= 2:
     checkpoint_file = sys.argv[1]
-    log_file = "log/" + os.path.splitext(os.path.basename(checkpoint_file))[0] + ".csv"
+    file_basename = os.path.splitext(os.path.basename(checkpoint_file))[0]
 
     checkpoint: dict[str, np.ndarray]
     with np.load(checkpoint_file) as checkpoint:
@@ -56,10 +59,6 @@ if len(sys.argv) >= 2:
     print(
         f"Loaded checkpoint: batch_size = {batch_size}, hidden_layer_features = {hidden_layer_features}, learning_rate = {learning_rate}, noise_prob = {noise_prob}, seed = {seed}"
     )
-else:
-    now = datetime.now()
-    checkpoint_file = f"checkpoint/{now.strftime('%Y%m%d_%H%M%S')}.npz"
-    log_file = f"log/{now.strftime('%Y%m%d_%H%M%S')}.csv"
 
 log_header = f"Batch size: {batch_size}, Hidden layer features: {hidden_layer_features}, Learning rate: {learning_rate}, Noise: {int(noise_prob * 100)}%"
 log_header += "\nEpoch, Train loss, Train accuracy, Test accuracy"
@@ -171,7 +170,7 @@ for i in np.arange(starting_epoch, epochs):
         )
 
         np.savetxt(
-            log_file,
+            f"log/{file_basename}.csv",
             result[: i + 1],
             fmt=["%d", "%f", "%f", "%f"],
             delimiter=",",
@@ -198,7 +197,7 @@ if show_optimal_stimuli:
     fig = plt.figure(num="Optimal stimuli")
     plt.imshow(optimal_stimuli, cmap="gray_r")
     plt.axis("off")
-    fig.savefig("log/optimal_stimuli.png", bbox_inches="tight")
+    fig.savefig(f"log/{file_basename}_optimal_stimuli.png", bbox_inches="tight")
 
 cmap_list = [
     "Greys",
@@ -227,6 +226,6 @@ if show_receptive_field and hidden_layer_features[0] <= len(cmap_list):
     for i, w in zip(np.random.permutation(len(cmap_list)), weight):
         plt.imshow(w.reshape(input_rows, input_cols), cmap=cmap_list[i], alpha=0.5)
     plt.axis("off")
-    fig.savefig("log/receptive_field.png", bbox_inches="tight")
+    fig.savefig(f"log/{file_basename}_receptive_field.png", bbox_inches="tight")
 
 plt.show()
