@@ -18,7 +18,7 @@ noise_prob = 0
 seed = 13
 
 train = True
-show_data_sample = True
+show_data_sample = False
 
 result = np.ndarray((epochs, 4))
 result[:, 0] = np.arange(epochs) + 1
@@ -84,8 +84,9 @@ for i in np.arange(starting_epoch, epochs):
             x = x.reshape(-1, input_rows * input_cols)
             y = net(x)
             acc += net.calc_acc(y, t)
-            loss: torch.Tensor = criterion(y, t)
-            loss.backward()
+            loss_mean: torch.Tensor = criterion(y, t)
+            loss += loss_mean.item()
+            loss_mean.backward()
             optimizer.step()
 
         train_acc[i] = acc / len(train_loader)
