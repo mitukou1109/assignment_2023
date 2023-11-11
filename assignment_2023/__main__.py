@@ -11,25 +11,27 @@ from PIL import Image
 from . import net as nn
 from . import transforms
 
+epochs = 300
+
 batch_size = 512
-features = [28 * 28, 1024, 512, 10]
+hidden_layer_features = [10]
 learning_rate = 0.5
-epochs = 100
 noise_prob = 0
 seed = 13
 
+train = True
 show_data_sample = False
 show_optimal_stimuli = True
 
 initial_params: nn.Tensor = None
 result = np.ndarray((epochs, 4))
 result[:, 0] = np.arange(epochs) + 1
-starting_epoch = 0
+starting_epoch = 0 if train else epochs - 1
 
 if len(sys.argv) >= 2:
     checkpoint: dict[str, np.ndarray] = np.load(sys.argv[1])
     batch_size = int(checkpoint["batch_size"][0])
-    features[1:-1] = checkpoint["hidden_layers"]
+    hidden_layer_features = checkpoint["hidden_layer_features"].tolist()
     learning_rate = float(checkpoint["learning_rate"][0])
     noise_prob = float(checkpoint["noise_prob"][0])
     seed = int(checkpoint["seed"][0])
@@ -41,12 +43,13 @@ if len(sys.argv) >= 2:
         p.prev = nn.Tensor(checkpoint[param])
         p = p.prev
 
-    starting_epoch = checkpoint["result"].shape[0]
-    assert epochs > starting_epoch
-    result[:starting_epoch] = checkpoint["result"]
+    if train:
+        starting_epoch = checkpoint["result"].shape[0]
+        assert epochs > starting_epoch
+        result[:starting_epoch] = checkpoint["result"]
 
     print(
-        f"Loaded checkpoint: batch_size = {batch_size}, hidden_layers = {features[1:-1]}, learning_rate = {learning_rate}, noise_prob = {noise_prob}, seed = {seed}"
+        f"Loaded checkpoint: batch_size = {batch_size}, hidden_layer_features = {hidden_layer_features}, learning_rate = {learning_rate}, noise_prob = {noise_prob}, seed = {seed}"
     )
 
 np.random.seed(seed)
@@ -79,7 +82,11 @@ if show_data_sample:
     plt.imshow(sample, cmap="gray")
     plt.show()
 
-net = nn.Net(features)
+input_rows = 28
+input_cols = 28
+output_features = 10
+
+net = nn.Net([input_rows * input_cols] + hidden_layer_features + [output_features])
 optimizer = nn.SGD(net.parameters(), learning_rate)
 criterion = nn.CrossEntropyLoss(net.parameters())
 
@@ -89,38 +96,42 @@ if initial_params is not None:
 now = datetime.now()
 checkpoint_file = f"checkpoint/{now.strftime('%Y%m%d_%H%M%S')}.npz"
 log_file = f"log/{now.strftime('%Y%m%d_%H%M%S')}.csv"
-header = f"Batch size: {batch_size}, Hidden layers: {features[1:-1]}, Learning rate: {learning_rate}, Noise: {int(noise_prob * 100)}%"
+header = f"Batch size: {batch_size}, Hidden layer features: {hidden_layer_features}, Learning rate: {learning_rate}, Noise: {int(noise_prob * 100)}%"
 header += "\nEpoch, Train loss, Train accuracy, Test accuracy"
 
 train_loss = result[:, 1]
 train_acc = result[:, 2]
 test_acc = result[:, 3]
 
+hidden_layer_output = np.zeros((hidden_layer_features[0],))
+optimal_stimuli = np.zeros((hidden_layer_features[0], input_rows, input_cols))
+
 for i in np.arange(starting_epoch, epochs):
-    print(f"epoch {i + 1}")
+    if train:
+        print(f"epoch {i + 1}")
+
+        acc = 0
+        loss = 0
+        for x, t in train_loader:
+            x = x.reshape(-1, input_rows * input_cols)
+            y = net(x)
+            acc += net.calc_acc(y, t)
+            loss += criterion(y, t)
+            grad = criterion.backward()
+            optimizer.step(grad)
+
+        train_acc[i] = acc / len(train_loader)
+        train_loss[i] = loss / len(train_loader)
 
     acc = 0
-    loss = 0
-    for x, t in train_loader:
-        x = x.reshape(-1, features[0])
-        y = net(x)
-        acc += net.calc_acc(y, t)
-        loss += criterion(y, t)
-        grad = criterion.backward()
-        optimizer.step(grad)
-
-    train_acc[i] = acc / len(train_loader)
-    train_loss[i] = loss / len(train_loader)
-
-    acc = 0
-    hidden_layer_output = np.zeros((features[1],))
-    optimal_stimuli = np.ndarray((features[1], 28, 28))
+    hidden_layer_output.fill(0)
+    optimal_stimuli.fill(0)
     for x, t in test_loader:
-        x_flat = x.reshape(-1, features[0])
+        x_flat = x.reshape(-1, input_rows * input_cols)
         y = net(x_flat)
         acc += net.calc_acc(y, t)
 
-        if show_optimal_stimuli:
+        if show_optimal_stimuli and (i == epochs - 1 or not train):
             y: nn.Tensor = net.layers["fc1"](x_flat)
             optimal_stimuli = np.where(
                 hidden_layer_output < y.max(axis=0),
@@ -132,32 +143,51 @@ for i in np.arange(starting_epoch, epochs):
     test_acc[i] = acc / len(test_loader)
 
     print(
-        f"train loss: {train_loss[i]}, train accuracy: {train_acc[i]}, test accuracy: {test_acc[i]}",
+        (
+            f"train loss: {train_loss[i]}, train accuracy: {train_acc[i]}, "
+            if train
+            else ""
+        )
+        + f"test accuracy: {test_acc[i]}",
         end="\n\n",
     )
 
-    np.savez_compressed(
-        checkpoint_file,
-        batch_size=np.array([batch_size]),
-        hidden_layers=np.array(features[1:-1]),
-        learning_rate=np.array([learning_rate]),
-        noise_prob=np.array([noise_prob]),
-        seed=np.array([seed]),
-        **net.parameters().expand("w"),
-        result=result[: i + 1],
-    )
+    if train:
+        np.savez_compressed(
+            checkpoint_file,
+            batch_size=np.array([batch_size]),
+            hidden_layer_features=np.array(hidden_layer_features),
+            learning_rate=np.array([learning_rate]),
+            noise_prob=np.array([noise_prob]),
+            seed=np.array([seed]),
+            **net.parameters().expand("w"),
+            result=result[: i + 1],
+        )
 
-    np.savetxt(
-        log_file,
-        result[: i + 1],
-        fmt=["%d", "%f", "%f", "%f"],
-        delimiter=",",
-        header=header,
-    )
+        np.savetxt(
+            log_file,
+            result[: i + 1],
+            fmt=["%d", "%f", "%f", "%f"],
+            delimiter=",",
+            header=header,
+        )
 
 if show_optimal_stimuli:
+    max_rows = 32
+    if (
+        optimal_stimuli.shape[0] > max_rows
+        and (rem := optimal_stimuli.shape[0] % max_rows) != 0
+    ):
+        optimal_stimuli = np.vstack(
+            [optimal_stimuli, np.zeros((max_rows - rem, input_rows, input_cols))]
+        )
+
+    rows = max(1, optimal_stimuli.shape[0] // max_rows)
+    cols = min(optimal_stimuli.shape[0], max_rows)
     optimal_stimuli = (
-        optimal_stimuli.reshape(32, 32, 28, 28).swapaxes(1, 2).reshape(32 * 28, 32 * 28)
+        optimal_stimuli.reshape(rows, cols, input_rows, input_cols)
+        .swapaxes(1, 2)
+        .reshape(rows * input_rows, cols * input_cols)
     )
     Image.fromarray(((1 - optimal_stimuli) * 255).astype("uint8"), mode="L").save(
         "log/optimal_stimuli.png"
