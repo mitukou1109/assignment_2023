@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision
-from PIL import Image
 
 from . import net as nn
 from . import transforms
@@ -23,6 +22,7 @@ seed = 13
 train = True
 show_data_sample = False
 show_optimal_stimuli = True
+show_receptive_field = True
 
 initial_params: nn.Tensor = None
 result = np.ndarray((epochs, 4))
@@ -195,9 +195,38 @@ if show_optimal_stimuli:
         .swapaxes(1, 2)
         .reshape(rows * input_rows, cols * input_cols)
     )
-    Image.fromarray(((1 - optimal_stimuli) * 255).astype("uint8"), mode="L").save(
-        "log/optimal_stimuli.png"
-    )
+    fig = plt.figure()
     plt.imshow(optimal_stimuli, cmap="gray_r")
     plt.axis("off")
+    fig.savefig("log/optimal_stimuli.png", bbox_inches="tight")
+    plt.show()
+
+cmap_list = [
+    "Greys",
+    "Purples",
+    "Blues",
+    "Greens",
+    "Oranges",
+    "Reds",
+    "YlOrBr",
+    "YlOrRd",
+    "OrRd",
+    "PuRd",
+    "RdPu",
+    "BuPu",
+    "GnBu",
+    "PuBu",
+    "YlGnBu",
+    "PuBuGn",
+    "BuGn",
+    "YlGn",
+]
+if show_receptive_field and hidden_layer_features[0] <= len(cmap_list):
+    fig = plt.figure()
+    weight = net.layers["fc1"].w[:, : input_rows * input_cols].clip(min=0.5)
+    w: np.ndarray
+    for i, w in zip(np.random.permutation(len(cmap_list)), weight):
+        plt.imshow(w.reshape(input_rows, input_cols), cmap=cmap_list[i], alpha=0.5)
+    plt.axis("off")
+    fig.savefig("log/receptive_field.png", bbox_inches="tight")
     plt.show()
