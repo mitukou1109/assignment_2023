@@ -37,7 +37,7 @@ ax.grid(axis="y")
 
 learning_curve = plt.figure(num="Learning curve")
 ax = learning_curve.add_subplot()
-ax.set_title(title)
+ax.set_title(title, wrap=True)
 ax.plot(epochs, train_acc, label="train")
 ax.plot(epochs, test_acc, label="test")
 ax.legend(loc="lower right")
