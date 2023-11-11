@@ -1,3 +1,4 @@
+import os
 import sys
 from datetime import datetime
 from functools import partial
@@ -29,8 +30,11 @@ result[:, 0] = np.arange(epochs) + 1
 starting_epoch = 0 if train else epochs - 1
 
 if len(sys.argv) >= 2:
+    checkpoint_file = sys.argv[1]
+    log_file = "log/" + os.path.splitext(os.path.basename(checkpoint_file))[0] + ".csv"
+
     checkpoint: dict[str, np.ndarray]
-    with np.load(sys.argv[1]) as checkpoint:
+    with np.load(checkpoint_file) as checkpoint:
         batch_size = int(checkpoint["batch_size"][0])
         hidden_layer_features = checkpoint["hidden_layer_features"].tolist()
         learning_rate = float(checkpoint["learning_rate"][0])
@@ -52,6 +56,13 @@ if len(sys.argv) >= 2:
     print(
         f"Loaded checkpoint: batch_size = {batch_size}, hidden_layer_features = {hidden_layer_features}, learning_rate = {learning_rate}, noise_prob = {noise_prob}, seed = {seed}"
     )
+else:
+    now = datetime.now()
+    checkpoint_file = f"checkpoint/{now.strftime('%Y%m%d_%H%M%S')}.npz"
+    log_file = f"log/{now.strftime('%Y%m%d_%H%M%S')}.csv"
+
+log_header = f"Batch size: {batch_size}, Hidden layer features: {hidden_layer_features}, Learning rate: {learning_rate}, Noise: {int(noise_prob * 100)}%"
+log_header += "\nEpoch, Train loss, Train accuracy, Test accuracy"
 
 np.random.seed(seed)
 torch.manual_seed(seed)
@@ -93,12 +104,6 @@ criterion = nn.CrossEntropyLoss(net.parameters())
 
 if initial_params is not None:
     net.set_params(initial_params)
-
-now = datetime.now()
-checkpoint_file = f"checkpoint/{now.strftime('%Y%m%d_%H%M%S')}.npz"
-log_file = f"log/{now.strftime('%Y%m%d_%H%M%S')}.csv"
-header = f"Batch size: {batch_size}, Hidden layer features: {hidden_layer_features}, Learning rate: {learning_rate}, Noise: {int(noise_prob * 100)}%"
-header += "\nEpoch, Train loss, Train accuracy, Test accuracy"
 
 train_loss = result[:, 1]
 train_acc = result[:, 2]
@@ -170,7 +175,7 @@ for i in np.arange(starting_epoch, epochs):
             result[: i + 1],
             fmt=["%d", "%f", "%f", "%f"],
             delimiter=",",
-            header=header,
+            header=log_header,
         )
 
 if show_optimal_stimuli:
