@@ -19,6 +19,6 @@ class Net(torch.nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.layers(x)
 
-    def calc_acc(self, y: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
+    def calc_acc(self, y: torch.Tensor, t: torch.Tensor) -> float:
         y_label = torch.argmax(y, dim=1)
         return torch.sum(y_label == t) / len(t)
