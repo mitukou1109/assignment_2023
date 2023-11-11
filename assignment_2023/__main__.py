@@ -29,24 +29,25 @@ result[:, 0] = np.arange(epochs) + 1
 starting_epoch = 0 if train else epochs - 1
 
 if len(sys.argv) >= 2:
-    checkpoint: dict[str, np.ndarray] = np.load(sys.argv[1])
-    batch_size = int(checkpoint["batch_size"][0])
-    hidden_layer_features = checkpoint["hidden_layer_features"].tolist()
-    learning_rate = float(checkpoint["learning_rate"][0])
-    noise_prob = float(checkpoint["noise_prob"][0])
-    seed = int(checkpoint["seed"][0])
+    checkpoint: dict[str, np.ndarray]
+    with np.load(sys.argv[1]) as checkpoint:
+        batch_size = int(checkpoint["batch_size"][0])
+        hidden_layer_features = checkpoint["hidden_layer_features"].tolist()
+        learning_rate = float(checkpoint["learning_rate"][0])
+        noise_prob = float(checkpoint["noise_prob"][0])
+        seed = int(checkpoint["seed"][0])
 
-    param_keys = sorted(k for k, _ in checkpoint.items() if k.startswith("w_"))
-    initial_params = nn.Tensor(checkpoint[param_keys[0]])
-    p = initial_params
-    for param in param_keys[1:]:
-        p.prev = nn.Tensor(checkpoint[param])
-        p = p.prev
+        param_keys = sorted(k for k, _ in checkpoint.items() if k.startswith("w_"))
+        initial_params = nn.Tensor(checkpoint[param_keys[0]])
+        p = initial_params
+        for param in param_keys[1:]:
+            p.prev = nn.Tensor(checkpoint[param])
+            p = p.prev
 
-    if train:
-        starting_epoch = checkpoint["result"].shape[0]
-        assert epochs > starting_epoch
-        result[:starting_epoch] = checkpoint["result"]
+        if train:
+            starting_epoch = checkpoint["result"].shape[0]
+            assert epochs > starting_epoch
+            result[:starting_epoch] = checkpoint["result"]
 
     print(
         f"Loaded checkpoint: batch_size = {batch_size}, hidden_layer_features = {hidden_layer_features}, learning_rate = {learning_rate}, noise_prob = {noise_prob}, seed = {seed}"
