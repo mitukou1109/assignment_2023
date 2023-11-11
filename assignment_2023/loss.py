@@ -1,5 +1,3 @@
-from typing import Self
-
 import numpy as np
 
 from .functional import cross_entropy, softmax
