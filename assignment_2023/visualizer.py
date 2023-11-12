@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 csv_path = max(glob.glob("log/*.csv")) if len(sys.argv) < 2 else sys.argv[1]
+with open(csv_path) as f:
+    title = f.readline().lstrip("# ")
 result = np.loadtxt(csv_path, delimiter=",")
 
 epochs = result[:, 0]
@@ -25,6 +27,7 @@ else:
 
 loss_curve = plt.figure(num="Loss")
 ax = loss_curve.add_subplot()
+ax.set_title(title, wrap=True)
 ax.plot(epochs, train_loss)
 ax.set_xlabel("epoch")
 ax.set_ylabel("loss")
@@ -34,6 +37,7 @@ ax.grid(axis="y")
 
 learning_curve = plt.figure(num="Learning curve")
 ax = learning_curve.add_subplot()
+ax.set_title(title, wrap=True)
 ax.plot(epochs, train_acc, label="train")
 ax.plot(epochs, test_acc, label="test")
 ax.legend(loc="lower right")
