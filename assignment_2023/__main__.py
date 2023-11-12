@@ -14,15 +14,15 @@ from . import transforms
 epochs = 300
 
 batch_size = 512
-hidden_layer_features = [10]
+hidden_layer_features = [256, 64]
 learning_rate = 0.5
 noise_prob = 0
 seed = 13
 
 train = True
 show_data_sample = False
-show_optimal_stimuli = True
-show_receptive_field = True
+show_optimal_stimuli = False
+show_receptive_field = False
 
 initial_params: nn.Tensor = None
 result = np.ndarray((epochs, 4))
