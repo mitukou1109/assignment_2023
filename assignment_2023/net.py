@@ -10,9 +10,9 @@ class Net(torch.nn.Module):
         super(Net, self).__init__()
         self.layers = torch.nn.Sequential()
         for i in range(len(features) - 1):
-            self.layers.add_module(
-                f"fc{i + 1}", torch.nn.Linear(features[i], features[i + 1])
-            )
+            fc = torch.nn.Linear(features[i], features[i + 1])
+            torch.nn.init.uniform_(fc.weight, -0.5, 0.5)
+            self.layers.add_module(f"fc{i + 1}", fc)
             if i + 1 < len(features) - 1:
                 self.layers.add_module(f"af{i + 1}", torch.nn.Sigmoid())
 
