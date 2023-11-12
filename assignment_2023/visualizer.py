@@ -37,7 +37,6 @@ ax.set_xlim(1, epochs[-1])
 ax.grid(axis="y")
 
 learning_curve = plt.figure(num="Learning curve")
-learning_curve.subplots_adjust(left=0.1, right=0.975, bottom=0.1, top=0.975)
 ax = learning_curve.add_subplot()
 ax.plot(epochs, train_acc, label="train")
 ax.plot(epochs, test_acc, label="test")
@@ -47,8 +46,12 @@ ax.set_ylabel("accuracy")
 ax.set_xticks(xticks)
 ax.set_xlim(1, epochs[-1])
 y_min = np.round(min(np.min(train_acc), np.min(test_acc)), 1)
-ax.set_yticks(np.arange(y_min, 1.01, 0.05 if 1 - y_min <= 0.5 else 0.1))
+y_step = 0.025 if 1 - y_min <= 0.2 else 0.05 if 1 - y_min <= 0.5 else 0.1
+ax.set_yticks(np.arange(y_min, 1.01, y_step))
 ax.set_ylim(y_min - (1 - y_min) * 0.05, 1 + (1 - y_min) * 0.05)
 ax.grid(axis="y")
+learning_curve.subplots_adjust(
+    left=0.12 - y_step * 0.4, right=0.975, bottom=0.1, top=0.975
+)
 
 plt.show()
