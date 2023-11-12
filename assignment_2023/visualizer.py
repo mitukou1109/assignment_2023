@@ -7,6 +7,9 @@ import numpy as np
 csv_path = max(glob.glob("log/*.csv")) if len(sys.argv) < 2 else sys.argv[1]
 result = np.loadtxt(csv_path, delimiter=",")
 
+if len(sys.argv) >= 3:
+    result = result[result[:, 0] <= int(sys.argv[2])]
+
 epochs = result[:, 0]
 train_loss = result[:, 1]
 train_acc = result[:, 2]
