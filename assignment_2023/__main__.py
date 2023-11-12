@@ -24,7 +24,7 @@ result = np.ndarray((epochs, 4))
 result[:, 0] = np.arange(epochs) + 1
 starting_epoch = 0 if train else epochs - 1
 
-file_basename = f"pytorch_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+file_basename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_pytorch"
 
 log_header = f"Batch size: {batch_size}, Hidden layer features: {hidden_layer_features}, Learning rate: {learning_rate}, Noise: {int(noise_prob * 100)}%"
 log_header += "\nEpoch, Train loss, Train accuracy, Test accuracy"
