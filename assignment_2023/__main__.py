@@ -90,7 +90,8 @@ train_loader = nn.DataLoader(train_dataset, batch_size, shuffle=True, num_worker
 test_loader = nn.DataLoader(test_dataset, batch_size, num_workers=2)
 if show_data_sample:
     sample: np.ndarray = next(iter(train_loader))[0][0].transpose(1, 2, 0)
-    plt.imshow(sample, cmap="gray")
+    plt.imshow(sample, cmap="gray_r")
+    plt.axis("off")
     plt.show()
 
 input_rows = 28
