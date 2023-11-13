@@ -159,6 +159,7 @@ for i in np.arange(starting_epoch, epochs):
     )
 
     if train:
+        os.makedirs("checkpoint", exist_ok=True)
         np.savez_compressed(
             checkpoint_file,
             batch_size=np.array([batch_size]),
@@ -170,6 +171,7 @@ for i in np.arange(starting_epoch, epochs):
             result=result[: i + 1],
         )
 
+        os.makedirs("log", exist_ok=True)
         np.savetxt(
             f"log/{file_basename}.csv",
             result[: i + 1],
@@ -198,6 +200,7 @@ if show_optimal_stimuli:
     fig = plt.figure(num="Optimal stimuli")
     plt.imshow(optimal_stimuli, cmap="gray_r")
     plt.axis("off")
+    os.makedirs("log", exist_ok=True)
     fig.savefig(f"log/{file_basename}_optimal_stimuli.png", bbox_inches="tight")
 
 cmap_list = [
@@ -227,6 +230,7 @@ if show_receptive_field and hidden_layer_features[0] <= len(cmap_list):
     for i, w in zip(np.random.permutation(len(cmap_list)), weight):
         plt.imshow(w.reshape(input_rows, input_cols), cmap=cmap_list[i], alpha=0.5)
     plt.axis("off")
+    os.makedirs("log", exist_ok=True)
     fig.savefig(f"log/{file_basename}_receptive_field.png", bbox_inches="tight")
 
 plt.show()
