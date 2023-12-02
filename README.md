@@ -1,4 +1,4 @@
-# assignment_2023
+# assignment_2023（ロボットインテリジェンス課題）
 
 ## 実行環境
 - Windows 11
